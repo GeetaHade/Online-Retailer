@@ -1,0 +1,100 @@
+/* App.css */
+
+/* General App Styles */
+.App {
+  text-align: center;
+}
+
+/* Header Styles */
+.App-header {
+  background-color: #282c34;
+  color: white;
+  padding: 20px;
+}
+
+h1 {
+  font-size: 2rem;
+  margin: 20px 0;
+}
+
+/* Product List Styles */
+ul {
+  list-style-type: none;
+  padding: 0;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+li {
+  border: 1px solid #ddd;
+  margin: 10px 0;
+  padding: 15px;
+  border-radius: 8px;
+  text-align: left;
+  background-color: #f9f9f9;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+li:hover {
+  background-color: #e0e0e0;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+h3 {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+p {
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+p.price {
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: #2b8a3e;
+}
+
+/* Optional: Footer styles */
+.App-footer {
+  background-color: #282c34;
+  color: white;
+  padding: 10px;
+  position: fixed;
+  width: 100%;
+  bottom: 0;
+}
+
+.form-input {
+  width: 100%;            /* Ensure all fields take full width */
+  padding: 10px;          /* Add padding for better appearance */
+  margin-bottom: 10px;    /* Space between fields */
+  font-size: 16px;        /* Consistent font size */
+  border: 1px solid #ccc; /* Light grey border */
+  border-radius: 4px;     /* Rounded corners for modern look */
+  box-sizing: border-box; /* Include padding and border in width calculation */
+}
+
+/* Ensure the textarea height matches input height */
+textarea.form-input {
+  height: 40px;           /* Match the height of input fields */
+  resize: none;           /* Disable manual resizing */
+}
+
+button {
+  background-color: #007bff; /* Blue background */
+  color: white;             /* White text */
+  padding: 10px 15px;       /* Button padding */
+  font-size: 16px;          /* Font size */
+  border: none;             /* Remove border */
+  border-radius: 4px;       /* Rounded corners */
+  cursor: pointer;          /* Pointer cursor on hover */
+}
+
+button:hover {
+  background-color: #0056b3; /* Darker blue on hover */
+}
+
