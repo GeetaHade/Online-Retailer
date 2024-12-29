@@ -38,6 +38,22 @@ app.get('/api/products', (req, res) => {
   });
 });
 
+//test
+// app.get('/api/products', (req, res) => {
+//   setTimeout(() => {
+//     const query = 'SELECT * FROM products';
+//     db.query(query, (err, results) => {
+//       if (err) {
+//         console.error('Error fetching products:', err);
+//         res.status(500).send('Server Error');
+//       } else {
+//         res.json(results);
+//       }
+//     });
+//   }, 2000); // Simulate a 2-second delay
+// });
+
+
 // Route to create a new product
 app.post('/api/products', (req, res) => {
   const { name, price, description, category } = req.body;
