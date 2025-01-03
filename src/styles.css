@@ -1,0 +1,129 @@
+/* Global Styles */
+body {
+    background: url('https://your-image-link.com/bg-image.jpg') no-repeat center center fixed;
+    background-size: cover;
+    color: #fff;
+    font-family: 'Arial', sans-serif;
+  }
+  
+  .container {
+    background: rgba(0, 0, 0, 0.6); /* Semi-transparent background to make content stand out */
+    padding: 20px;
+    border-radius: 10px;
+  }
+  
+  /* Search and Filter Section */
+  .row.mb-3 {
+    margin-bottom: 20px;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 15px;
+    border-radius: 10px;
+  }
+  
+  input.form-control, select.form-select {
+    background-color: #444;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+  }
+  
+  input.form-control::placeholder, select.form-select {
+    color: #ccc;
+  }
+  
+  /* Product Card Styles */
+  .card {
+    border: none;
+    background-color: #222;
+    border-radius: 10px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+  
+  .card-img-top {
+    height: 200px;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+  
+  .card-body {
+    padding: 15px;
+  }
+  
+  .card-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+  
+  .card-text {
+    font-size: 0.9rem;
+  }
+  
+  /* Button Styles */
+  .btn {
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-size: 1rem;
+  }
+  
+  .btn-danger {
+    background-color: #e74c3c;
+  }
+  
+  .btn-primary {
+    background-color: #3498db;
+  }
+  
+  .btn-outline-secondary {
+    background-color: #7f8c8d;
+  }
+  
+  .pagination button {
+    border-radius: 50%;
+    margin: 0 5px;
+    padding: 10px;
+    background-color: #fff;
+    color: #333;
+  }
+  
+  .pagination button:hover {
+    background-color: #3498db;
+    color: #fff;
+  }
+  
+  .product-form input,
+  .product-form textarea,
+  .product-form button {
+    background-color: #444;
+    color: #fff;
+    border-radius: 5px;
+    border: none;
+    margin-bottom: 10px;
+    padding: 10px;
+  }
+  
+  .product-form button {
+    background-color: #2ecc71;
+    cursor: pointer;
+  }
+  
+  .product-form button:hover {
+    background-color: #27ae60;
+  }
+  
+  /* Add some spacing */
+  .mb-4 {
+    margin-bottom: 30px;
+  }
+  
+  /* Pagination Styling */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+  }
+  
