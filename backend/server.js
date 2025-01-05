@@ -3,13 +3,42 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const { mysqlConnection } = require('./config/database'); // Import MySQL connection
+const multer = require('multer');
+const path = require('path');
+
 
 const app = express();
 const port = process.env.PORT || 5003;
 
+const storage = multer.diskStorage({
+  destination: './uploads/',
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}${path.extname(file.originalname)}`); // Ensure unique file names
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    const fileTypes = /jpeg|jpg|png|gif/; // Allowed extensions
+    const extname = fileTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = fileTypes.test(file.mimetype);
+
+    if (extname && mimetype) {
+      cb(null, true);
+    } else {
+      cb('Error: Images only!');
+    }
+  },
+});
+
+
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Sample in-memory users database (replace with a real database in the future)
 const users = [
@@ -70,7 +99,7 @@ mysqlConnection.connect((err) => {
 
 // Route to get all products - Public route (no authentication needed)
 app.get('/api/products', (req, res) => {
-  const query = 'SELECT * FROM products'; // SQL query to get all products
+  const query = 'SELECT * FROM products';
   mysqlConnection.query(query, (err, results) => {
     if (err) {
       console.error('Error fetching products:', err);
@@ -81,16 +110,19 @@ app.get('/api/products', (req, res) => {
   });
 });
 
+
 // Route to create a new product - Protected route (authentication needed)
-app.post('/api/products', authenticateJWT, (req, res) => {
+app.post('/api/products', authenticateJWT, upload.single('image'), (req, res) => {
   const { name, price, description, category } = req.body;
-  const query = 'INSERT INTO products (name, price, description, category) VALUES (?, ?, ?, ?)';
-  mysqlConnection.query(query, [name, price, description, category], (err, result) => {
+  const image = req.file ? `/uploads/${req.file.filename}` : null;
+
+  const query = 'INSERT INTO products (name, price, description, category, image) VALUES (?, ?, ?, ?, ?)';
+  mysqlConnection.query(query, [name, price, description, category, image], (err, result) => {
     if (err) {
       console.error('Error adding product:', err);
       res.status(500).send('Server Error');
     } else {
-      res.status(201).send('Product created');
+      res.status(201).send('Product created with image');
     }
   });
 });

@@ -272,6 +272,64 @@ h2 {
   font-size: 14px;
   color: #555;
 }
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* Adds space between form elements */
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-control {
+  padding: 10px;
+  margin-top: 5px;
+  width: 100%;
+}
+
+button {
+  align-self: flex-start;
+  margin-top: 20px;
+}
+
+.form-container {
+  border: 1px solid #ddd; /* Light border around the form */
+  padding: 20px; /* Adds padding inside the box */
+  border-radius: 10px; /* Rounded corners for the box */
+  background-color: #f9f9f9; /* Light background color */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Soft shadow around the box */
+  margin-top: 20px; /* Spacing from other elements */
+  width: 100%; /* Ensure form takes up the full width of its container */
+  max-width: 600px; /* Optional: Limit the maximum width of the form */
+  margin-left: auto;
+  margin-right: auto; /* Center the form horizontally */
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-control {
+  padding: 10px;
+  margin-top: 5px;
+  width: 100%;
+}
+
+button {
+  align-self: flex-start;
+  margin-top: 20px;
+}
+
+
 
 
 

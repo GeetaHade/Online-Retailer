@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const ProductForm = ({ product, setProduct, handleSubmit, isEditing, handleCancel }) => {
   return (
-    <form onSubmit={handleSubmit} className="product-form">
+    <form onSubmit={handleSubmit} className="product-form" encType="multipart/form-data">
       <input
         type="text"
         placeholder="Name"
@@ -27,6 +27,11 @@ const ProductForm = ({ product, setProduct, handleSubmit, isEditing, handleCance
         value={product.category}
         onChange={(e) => setProduct({ ...product, category: e.target.value })}
       />
+      <input
+        type="file"
+        accept="image/*"
+        onChange={(e) => setProduct({ ...product, image: e.target.files[0] })}
+      />
       <button type="submit">{isEditing ? 'Update Product' : 'Add Product'}</button>
       {isEditing && <button type="button" onClick={handleCancel}>Cancel</button>}
     </form>
@@ -40,7 +45,7 @@ const Products = () => {
     price: '',
     description: '',
     category: '',
-    image: '',  // Add image field to new product
+    image: null,  // Changed to hold the file
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -69,16 +74,29 @@ const Products = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!newProduct.name || !newProduct.price || !newProduct.description || !newProduct.category) {
+    if (!newProduct.name || !newProduct.price || !newProduct.description || !newProduct.category || !newProduct.image) {
       alert('Please fill in all fields.');
       return;
     }
+
+    // Create a FormData object to handle the image upload
+    const formData = new FormData();
+    formData.append('name', newProduct.name);
+    formData.append('price', newProduct.price);
+    formData.append('description', newProduct.description);
+    formData.append('category', newProduct.category);
+    formData.append('image', newProduct.image);
+
     axios
-      .post('http://localhost:5003/api/products', newProduct)
+      .post('http://localhost:5003/api/products', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
       .then((response) => {
         alert('Product added successfully!');
         setProducts((prevProducts) => [...prevProducts, response.data]);
-        setNewProduct({ name: '', price: '', description: '', category: '' });
+        setNewProduct({ name: '', price: '', description: '', category: '', image: null });
       })
       .catch((error) => console.error('Error adding product:', error));
   };
@@ -99,8 +117,21 @@ const Products = () => {
 
   const handleUpdate = (e, id) => {
     e.preventDefault();
+    const formData = new FormData();
+    formData.append('name', editingProduct.name);
+    formData.append('price', editingProduct.price);
+    formData.append('description', editingProduct.description);
+    formData.append('category', editingProduct.category);
+    if (editingProduct.image) {
+      formData.append('image', editingProduct.image);  // Attach new image if available
+    }
+
     axios
-      .put(`http://localhost:5003/api/products/${id}`, editingProduct)
+      .put(`http://localhost:5003/api/products/${id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
       .then(() => {
         alert('Product updated!');
         setEditingProduct(null);
@@ -183,7 +214,12 @@ const Products = () => {
             {currentProducts.map((product) => (
               <div key={product.id} className="col-md-4 mb-4">
                 <div className="card h-100 shadow-sm">
-                  <img src={product.image || 'https://via.placeholder.com/300'} alt={product.name} className="card-img-top" />
+                  <img
+                    src={`http://localhost:5003/uploads/${product.image}`}
+                    alt={product.name}
+                    className="card-img-top"
+                  />
+
                   <div className="card-body">
                     <h5 className="card-title">{product.name}</h5>
                     <p className="card-text">{product.description}</p>
@@ -225,21 +261,23 @@ const Products = () => {
           </div>
 
           {/* Forms */}
-          {editingProduct ? (
-            <ProductForm
-              product={editingProduct}
-              setProduct={setEditingProduct}
-              handleSubmit={(e) => handleUpdate(e, editingProduct.id)}
-              isEditing
-              handleCancel={() => setEditingProduct(null)}
-            />
-          ) : (
-            <ProductForm
-              product={newProduct}
-              setProduct={setNewProduct}
-              handleSubmit={handleSubmit}
-            />
-          )}
+            <div className='form-container'>
+              {editingProduct ? (
+                <ProductForm
+                  product={editingProduct}
+                  setProduct={setEditingProduct}
+                  handleSubmit={(e) => handleUpdate(e, editingProduct.id)}
+                  isEditing
+                  handleCancel={() => setEditingProduct(null)}
+                />
+              ) : (
+                <ProductForm
+                  product={newProduct}
+                  setProduct={setNewProduct}
+                  handleSubmit={handleSubmit}
+                />
+              )}
+            </div>
         </>
       )}
     </div>
