@@ -160,19 +160,14 @@ const Products = () => {
         alert('Product updated!');
         setEditingProduct(null); // Clear the form
   
-        // Optionally fetch updated product from the backend
-        axios.get(`http://localhost:5003/api/products/${id}`).then((response) => {
-          const updatedProduct = response.data;
-  
-          // Update the product in the UI immediately
-          setProducts((prevProducts) =>
-            prevProducts.map((product) =>
-              product.id === id ? updatedProduct : product
-            )
-          );
-        }).catch((error) => {
-          console.error('Error fetching updated product:', error.response?.data || error.message);
-        });
+        setProducts((prevProducts) =>
+          prevProducts.map((product) =>
+            product.id === id
+              ? { ...product, ...editingProduct, image: editingProduct.image || product.image }
+              : product
+          )
+        );
+        
       })
       .catch((error) => {
         console.error('Error updating the product:', error.response?.data || error.message);
