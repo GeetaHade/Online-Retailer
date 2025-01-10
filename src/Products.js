@@ -45,7 +45,7 @@ const Products = () => {
     price: '',
     description: '',
     category: '',
-    image: null,  // Changed to hold the file
+    image: null,
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -60,7 +60,11 @@ const Products = () => {
     console.log('Fetching products...');
     setLoading(true);
     axios
-      .get('http://localhost:5003/api/products')
+      .get('http://localhost:5003/api/products', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`, // Corrected template literal
+        },
+      })
       .then((response) => {
         console.log('Fetch successful!');
         setProducts(response.data);
@@ -74,23 +78,27 @@ const Products = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Debugging: Log the new product data
+    console.log('Adding new product:', newProduct);
+
     if (!newProduct.name || !newProduct.price || !newProduct.description || !newProduct.category || !newProduct.image) {
       alert('Please fill in all fields.');
       return;
     }
 
-    // Create a FormData object to handle the image upload
     const formData = new FormData();
     formData.append('name', newProduct.name);
     formData.append('price', newProduct.price);
     formData.append('description', newProduct.description);
     formData.append('category', newProduct.category);
-    formData.append('image', newProduct.image);
+    formData.append('image', newProduct.image);  // Ensure image is added properly
 
     axios
       .post('http://localhost:5003/api/products', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`, // Corrected template literal
         },
       })
       .then((response) => {
@@ -103,7 +111,11 @@ const Products = () => {
 
   const handleDelete = (id) => {
     axios
-      .delete(`http://localhost:5003/api/products/${id}`)
+      .delete(`http://localhost:5003/api/products/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`, // Corrected template literal
+        },
+      })
       .then(() => {
         alert('Product deleted!');
         setProducts(products.filter((product) => product.id !== id));
@@ -112,38 +124,61 @@ const Products = () => {
   };
 
   const handleEditClick = (product) => {
-    setEditingProduct(product);
+    console.log('Editing product:', product); // Check the product data
+    setEditingProduct({ ...product });  // Ensure you're making a copy of the product to edit
   };
 
   const handleUpdate = (e, id) => {
     e.preventDefault();
+  
+    // Debugging: log the updated product
+    console.log('Updated product:', editingProduct);
+  
+    // Debugging: log the ID of the product being updated
+    console.log('Updating product with ID:', id);
+  
     const formData = new FormData();
     formData.append('name', editingProduct.name);
     formData.append('price', editingProduct.price);
     formData.append('description', editingProduct.description);
     formData.append('category', editingProduct.category);
-    if (editingProduct.image) {
+  
+    // Handle the image upload (only if a new image is provided)
+    if (editingProduct.image && editingProduct.image !== 'existing-image') {
       formData.append('image', editingProduct.image);  // Attach new image if available
     }
-
+  
+    // Make the PUT request to update the product
     axios
       .put(`http://localhost:5003/api/products/${id}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`, // Corrected template literal
         },
       })
       .then(() => {
         alert('Product updated!');
-        setEditingProduct(null);
-        setProducts((prevProducts) =>
-          prevProducts.map((product) =>
-            product.id === id ? editingProduct : product
-          )
-        );
+        setEditingProduct(null); // Clear the form
+  
+        // Optionally fetch updated product from the backend
+        axios.get(`http://localhost:5003/api/products/${id}`).then((response) => {
+          const updatedProduct = response.data;
+  
+          // Update the product in the UI immediately
+          setProducts((prevProducts) =>
+            prevProducts.map((product) =>
+              product.id === id ? updatedProduct : product
+            )
+          );
+        }).catch((error) => {
+          console.error('Error fetching updated product:', error.response?.data || error.message);
+        });
       })
-      .catch((error) => console.error('Error updating the product:', error));
+      .catch((error) => {
+        console.error('Error updating the product:', error.response?.data || error.message);
+      });
   };
-
+  
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
 
@@ -215,7 +250,7 @@ const Products = () => {
               <div key={product.id} className="col-md-4 mb-4">
                 <div className="card h-100 shadow-sm">
                   <img
-                    src={`http://localhost:5003/uploads/${product.image}`}
+                    src={`http://localhost:5003/uploads/${product.image}`}  // Fixed image URL
                     alt={product.name}
                     className="card-img-top"
                   />
@@ -223,19 +258,19 @@ const Products = () => {
                   <div className="card-body">
                     <h5 className="card-title">{product.name}</h5>
                     <p className="card-text">{product.description}</p>
-                    <p><strong>Price:</strong> ${product.price}</p>
-                    <p><strong>Category:</strong> {product.category}</p>
-                    <button
-                      className="btn btn-danger me-2"
-                      onClick={() => handleDelete(product.id)}
-                    >
-                      Delete
-                    </button>
+                    <p className="card-text">${product.price}</p>
+                    <p className="card-text">{product.category}</p>
                     <button
                       className="btn btn-primary"
                       onClick={() => handleEditClick(product)}
                     >
                       Edit
+                    </button>
+                    <button
+                      className="btn btn-danger ms-2"
+                      onClick={() => handleDelete(product.id)}
+                    >
+                      Delete
                     </button>
                   </div>
                 </div>
@@ -244,40 +279,41 @@ const Products = () => {
           </div>
 
           {/* Pagination */}
-          <div className="pagination justify-content-center">
-            {[...Array(Math.ceil(products.length / productsPerPage)).keys()].map(
-              (number) => (
-                <button
-                  key={number}
-                  onClick={() => setCurrentPage(number + 1)}
-                  className={
-                    currentPage === number + 1 ? 'btn btn-primary me-2' : 'btn btn-outline-secondary me-2'
-                  }
-                >
-                  {number + 1}
-                </button>
-              )
-            )}
+          <div className="d-flex justify-content-center mt-3">
+            <button
+              className="btn btn-secondary me-2"
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </button>
+            <button
+              className="btn btn-secondary"
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={indexOfLastProduct >= products.length}
+            >
+              Next
+            </button>
           </div>
 
-          {/* Forms */}
-            <div className='form-container'>
-              {editingProduct ? (
-                <ProductForm
-                  product={editingProduct}
-                  setProduct={setEditingProduct}
-                  handleSubmit={(e) => handleUpdate(e, editingProduct.id)}
-                  isEditing
-                  handleCancel={() => setEditingProduct(null)}
-                />
-              ) : (
-                <ProductForm
-                  product={newProduct}
-                  setProduct={setNewProduct}
-                  handleSubmit={handleSubmit}
-                />
-              )}
-            </div>
+          {/* Product Form */}
+          {editingProduct ? (
+            <ProductForm
+              product={editingProduct}
+              setProduct={setEditingProduct}
+              handleSubmit={(e) => handleUpdate(e, editingProduct.id)}
+              isEditing={true}
+              handleCancel={() => setEditingProduct(null)}
+            />
+          ) : (
+            <ProductForm
+              product={newProduct}
+              setProduct={setNewProduct}
+              handleSubmit={handleSubmit}
+              isEditing={false}
+              handleCancel={() => setNewProduct({ name: '', price: '', description: '', category: '', image: null })}
+            />
+          )}
         </>
       )}
     </div>

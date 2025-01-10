@@ -1,5 +1,3 @@
-/* App.css */
-
 /* General App Styles */
 .App {
   text-align: center;
@@ -68,51 +66,59 @@ p.price {
   bottom: 0;
 }
 
-.form-input {
-  width: 100%;            /* Ensure all fields take full width */
-  padding: 10px;          /* Add padding for better appearance */
-  margin-bottom: 10px;    /* Space between fields */
-  font-size: 16px;        /* Consistent font size */
-  border: 1px solid #ccc; /* Light grey border */
-  border-radius: 4px;     /* Rounded corners for modern look */
-  box-sizing: border-box; /* Include padding and border in width calculation */
+/* Login Form Styles */
+.login-form-container {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Ensure the textarea height matches input height */
-textarea.form-input {
-  height: 40px;           /* Match the height of input fields */
-  resize: none;           /* Disable manual resizing */
+.login-form-container h2 {
+  text-align: center;
+  margin-bottom: 20px;
 }
 
-button {
-  background-color: #007bff; /* Blue background */
-  color: white;             /* White text */
-  padding: 10px 15px;       /* Button padding */
-  font-size: 16px;          /* Font size */
-  border: none;             /* Remove border */
-  border-radius: 4px;       /* Rounded corners */
-  cursor: pointer;          /* Pointer cursor on hover */
+.login-form-container input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
 }
 
-button:hover {
-  background-color: #0056b3; /* Darker blue on hover */
+.login-form-container input:focus {
+  border-color: #007bff;
+  outline: none;
 }
 
-.form-input {
-  width: 100%;            /* Full width for input fields */
-  padding: 10px;          /* Add padding inside the inputs */
-  margin-bottom: 10px;    /* Space between inputs */
-  font-size: 16px;        /* Consistent font size */
-  border: 1px solid #ccc; /* Light grey border */
-  border-radius: 4px;     /* Rounded corners */
-  box-sizing: border-box; /* Include padding and border in width calculation */
+.login-form-container button {
+  width: 100%;
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
 }
 
-select.form-input {
-  background-color: #fff; /* Ensure dropdown has a white background */
-  cursor: pointer;        /* Pointer cursor for dropdown */
+.login-form-container button:hover {
+  background-color: #0056b3;
 }
 
+.login-form-container .error {
+  color: red;
+  font-size: 14px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+/* Product Card Styles */
 .product-card {
   border: 1px solid #ccc;
   border-radius: 8px;
@@ -144,13 +150,16 @@ select.form-input {
 .product-card button:hover {
   background-color: #0056b3;
 }
+
+/* Form Styles */
 .form-container {
-  width: 300px;
+  width: 100%;
+  max-width: 600px;
   margin: 0 auto;
   padding: 20px;
   background-color: #f9f9f9;
   border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 h2 {
@@ -182,16 +191,16 @@ h2 {
   resize: vertical;
   min-height: 80px;
 }
+
 /* Container for the buttons */
 .button-container {
-  display: flex;              /* Use flexbox to align items side by side */
-  gap: 10px;                  /* Add some space between the buttons */
-  justify-content: start;     /* Align buttons to the start (left) */
+  display: flex;
+  gap: 10px;
+  justify-content: start;
 }
 
-/* Style buttons individually if needed */
 .button-container button {
-  padding: 8px 15px;          /* Adjust padding for a better look */
+  padding: 8px 15px;
   font-size: 1em;
   border-radius: 4px;
   border: 1px solid #ccc;
@@ -200,24 +209,24 @@ h2 {
 }
 
 .button-container button:first-child {
-  background-color: #dc3545;  /* Red background for Delete */
+  background-color: #dc3545;
   color: white;
 }
 
 .button-container button:first-child:hover {
-  background-color: #c82333;  /* Darker red on hover */
+  background-color: #c82333;
 }
 
 .button-container button:last-child {
-  background-color: #007bff;  /* Blue background for Edit */
+  background-color: #007bff;
   color: white;
 }
 
 .button-container button:last-child:hover {
-  background-color: #0056b3;  /* Darker blue on hover */
+  background-color: #0056b3;
 }
 
-
+/* Search and Filter */
 .search-filter-container {
   display: flex;
   flex-direction: column;
@@ -244,6 +253,7 @@ h2 {
   outline: none;
 }
 
+/* Spinner Styles */
 .spinner-container {
   display: flex;
   flex-direction: column;
@@ -272,41 +282,8 @@ h2 {
   font-size: 14px;
   color: #555;
 }
-form {
-  display: flex;
-  flex-direction: column;
-  gap: 15px; /* Adds space between form elements */
-}
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-}
-
-.form-control {
-  padding: 10px;
-  margin-top: 5px;
-  width: 100%;
-}
-
-button {
-  align-self: flex-start;
-  margin-top: 20px;
-}
-
-.form-container {
-  border: 1px solid #ddd; /* Light border around the form */
-  padding: 20px; /* Adds padding inside the box */
-  border-radius: 10px; /* Rounded corners for the box */
-  background-color: #f9f9f9; /* Light background color */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Soft shadow around the box */
-  margin-top: 20px; /* Spacing from other elements */
-  width: 100%; /* Ensure form takes up the full width of its container */
-  max-width: 600px; /* Optional: Limit the maximum width of the form */
-  margin-left: auto;
-  margin-right: auto; /* Center the form horizontally */
-}
-
+/* Form Elements */
 form {
   display: flex;
   flex-direction: column;
@@ -328,9 +305,3 @@ button {
   align-self: flex-start;
   margin-top: 20px;
 }
-
-
-
-
-
-
