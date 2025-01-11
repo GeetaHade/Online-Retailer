@@ -1,92 +1,67 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'; // Import Router and Routes
 import axios from 'axios';
 import Products from './Products'; // Import the Products component
+import Signup from './components/Signup';
+import Login from './components/login';
+
 import './App.css';
 import './styles.css'; // Import the styles.css file
 
-// Simple Login Component
-const Login = ({ setIsLoggedIn }) => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-
-  const handleLogin = async (event) => {
-    event.preventDefault();
-    try {
-      const response = await axios.post('http://localhost:5003/api/login', {
-        username,
-        password,
-      });
-      localStorage.setItem('token', response.data.token); // Store token in localStorage
-      setIsLoggedIn(true); // Update login state
-      alert('Login successful!');
-    } catch (error) {
-      alert('Login failed!');
-      console.error('Login error:', error);
-    }
-  };
-
-  return (
-    <div>
-      <h2>Login</h2>
-      <form onSubmit={handleLogin}>
-        <div>
-          <label>Username: </label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-        </div>
-        <div>
-          <label>Password: </label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
-        <button type="submit">Login</button>
-      </form>
-    </div>
-  );
-};
-
-// Main App Component
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  useEffect(() => {
+    // Check if there's a token in localStorage and set login state accordingly
+    const token = localStorage.getItem('token');
+    if (token) {
+      setIsLoggedIn(true); // If token exists, user is logged in
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token'); // Remove token from localStorage
+    setIsLoggedIn(false); // Update login state on logout
+  };
+
   return (
-    <div>
-      {/* Navbar */}
-      <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div className="container-fluid">
-          <a className="navbar-brand" href="#">Online Retailer</a>
-          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span className="navbar-toggler-icon"></span>
-          </button>
-          <div className="collapse navbar-collapse" id="navbarNav">
-            <ul className="navbar-nav">
-              <li className="nav-item">
-                <a className="nav-link active" aria-current="page" href="#products">Products</a>
-              </li>
-              <li className="nav-item">
-                <a className="nav-link" href="#contact">Contact</a>
-              </li>
-            </ul>
+    <Router>
+      <div>
+        {/* Navbar */}
+        <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
+          <div className="container-fluid">
+            <h1 className="navbar-brand">Online Retailer</h1>
+            <div className="navbar-nav">
+              {!isLoggedIn && (
+                <>
+                  <div className="nav-item">
+                    <Link className="nav-link" to="/login">Login</Link>
+                  </div>
+                  <div className="nav-item">
+                    <Link className="nav-link" to="/signup">Signup</Link>
+                  </div>
+                </>
+              )}
+              {isLoggedIn && (
+                <div className="nav-item">
+                  <button onClick={handleLogout} className="nav-link">Logout</button>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
 
-      <h1 className="text-center">Welcome to Online Retailer</h1>
+        <h1 className="text-center">Welcome to Online Retailer</h1>
 
-      {/* Conditional Rendering */}
-      {isLoggedIn ? (
-        <Products /> // Show Products if logged in
-      ) : (
-        <Login setIsLoggedIn={setIsLoggedIn} /> // Show Login form if not logged in
-      )}
-    </div>
+        {/* Routes Setup */}
+        <Routes>
+          <Route path="/signup" element={<Signup />} /> {/* Signup Route */}
+          <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} /> {/* Login Route */}
+          <Route path="/products" element={isLoggedIn ? <Products /> : <Login setIsLoggedIn={setIsLoggedIn} />} /> {/* Protected Products Route */}
+        </Routes>
+      </div>
+    </Router>
   );
 };
 
-export default App; 
+export default App;

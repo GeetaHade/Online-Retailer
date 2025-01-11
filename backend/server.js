@@ -1,10 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const jwt = require('jsonwebtoken');
-const { mysqlConnection } = require('./config/database'); // Import MySQL connection
 const multer = require('multer');
 const path = require('path');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { mysqlConnection } = require('./config/database'); // Import MySQL connection
+const { authenticateJWT, signup, authenticateUser } = require('./authController');
 
 const app = express();
 const port = process.env.PORT || 5003;
@@ -44,48 +46,11 @@ app.use(bodyParser.json());
 // Serve images from 'uploads' folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Sample in-memory users database (replace with a real database in the future)
-const users = [
-  { id: 1, username: 'storeOwner', password: 'password123', role: 'storeOwner' },
-  { id: 2, username: 'customer', password: 'password123', role: 'customer' }
-];
+// Route to login and generate JWT token
+app.post('/api/login', authenticateUser);
 
-// Middleware function to verify the JWT token
-function authenticateJWT(req, res, next) {
-  const token = req.header('Authorization')?.split(' ')[1]; // Extract the token from the "Authorization" header
-  console.log('Token received:', token); // Log the token for debugging
-
-  if (!token) return res.status(401).send('Access Denied: No token provided');
-  
-  const SECRET_KEY = 'your-secure-secret-key';  // Ensure consistency in the secret key
-
-  jwt.verify(token, SECRET_KEY, (err, user) => {
-    if (err) {
-      console.error('Token verification error:', err);  // Log the error for debugging
-      return res.status(403).send('Access Denied: Invalid token');
-    }
-    req.user = user;  // Store the user data in the request object
-    next();  // Continue to the next middleware or route handler
-  });
-}
-
-// Login route to authenticate users and generate a JWT token
-app.post('/api/login', (req, res) => {
-  const { username, password } = req.body;
-
-  // Find user by username and password
-  const user = users.find(u => u.username === username && u.password === password);
-  if (user) {
-    // Generate a JWT token with the user's ID and role, and set an expiration time
-    const SECRET_KEY = 'your-secure-secret-key';
-    const token = jwt.sign({ id: user.id, role: user.role }, SECRET_KEY, { expiresIn: '1h' });
-    // Send the token as the response
-    res.json({ token });
-  } else {
-    // If authentication fails, return an error
-    res.status(401).send('Invalid credentials');
-  }
-});
+// Route to handle user signup
+app.post('/api/signup', signup);  // Use the signup method from authController
 
 // Test the MySQL connection
 mysqlConnection.connect((err) => {
@@ -112,10 +77,7 @@ app.get('/api/products', (req, res) => {
 // Route to create a new product - Protected route (authentication needed)
 app.post('/api/products', authenticateJWT, upload.single('image'), (req, res) => {
   const { name, price, description, category } = req.body;
-  const image = req.file ? req.file.filename : null;  // Store only the image filename
-
-  // Debugging: Log the uploaded file details
-  console.log('Uploaded file details:', req.file);
+  const image = req.file ? req.file.filename : null;
 
   const query = 'INSERT INTO products (name, price, description, category, image) VALUES (?, ?, ?, ?, ?)';
   mysqlConnection.query(query, [name, price, description, category, image], (err, result) => {
@@ -127,16 +89,11 @@ app.post('/api/products', authenticateJWT, upload.single('image'), (req, res) =>
     }
   });
 });
+
 app.put('/api/products/:id', authenticateJWT, upload.single('image'), (req, res) => {
   const { name, price, description, category } = req.body;
-  const image = req.file ? req.file.filename : null; // Get the new image filename, if any
+  const image = req.file ? req.file.filename : null;
 
-  // Debugging: Log incoming data
-  console.log('Request body:', req.body);  // Log the product data
-  console.log('Uploaded image:', req.file); // Log the uploaded file (if any)
-  console.log('Uploaded file details:', req.file); // Log the uploaded file details
-
-  // If no new image is uploaded, keep the existing image in the database
   const query = image
     ? 'UPDATE products SET name = ?, price = ?, description = ?, category = ?, image = ? WHERE id = ?'
     : 'UPDATE products SET name = ?, price = ?, description = ?, category = ? WHERE id = ?';
@@ -145,16 +102,11 @@ app.put('/api/products/:id', authenticateJWT, upload.single('image'), (req, res)
     ? [name, price, description, category, image, req.params.id]
     : [name, price, description, category, req.params.id];
 
-  // Debugging: Log the query and params
-  console.log('SQL Query:', query);
-  console.log('SQL Params:', params);
-
   mysqlConnection.query(query, params, (err, result) => {
     if (err) {
       console.error('Error updating product:', err);
       res.status(500).send('Server Error');
     } else {
-      // After updating, fetch the updated product and send back to the frontend
       const selectQuery = 'SELECT * FROM products WHERE id = ?';
       mysqlConnection.query(selectQuery, [req.params.id], (selectErr, updatedProduct) => {
         if (selectErr) {
@@ -167,7 +119,6 @@ app.put('/api/products/:id', authenticateJWT, upload.single('image'), (req, res)
     }
   });
 });
-
 
 // Route to delete a product - Protected route (authentication needed)
 app.delete('/api/products/:id', authenticateJWT, (req, res) => {
