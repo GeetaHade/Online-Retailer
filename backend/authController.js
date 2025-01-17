@@ -5,21 +5,30 @@ const { mysqlConnection } = require('./config/database');
 // JWT secret key
 const SECRET_KEY = 'your_secret_key_here'; // Replace with a secure key
 
-// Middleware to authenticate JWT
-const authenticateJWT = (req, res, next) => {
-  const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+// Middleware to verify JWT and check user role
+const verifyRole = (requiredRole) => {
+  return (req, res, next) => {
+    const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
 
-  if (!token) {
-    return res.status(401).json({ message: 'Authentication token missing' });
-  }
-
-  jwt.verify(token, SECRET_KEY, (err, user) => {
-    if (err) {
-      return res.status(403).json({ message: 'Invalid or expired token' });
+    if (!token) {
+      return res.status(401).json({ message: 'Authentication token missing' });
     }
-    req.user = user;
-    next();
-  });
+
+    jwt.verify(token, SECRET_KEY, (err, user) => {
+      if (err) {
+        return res.status(403).json({ message: 'Invalid or expired token' });
+      }
+
+      req.user = user;
+
+      // Check if the user has the required role
+      if (user.role !== requiredRole) {
+        return res.status(403).json({ message: 'Access forbidden: Insufficient role' });
+      }
+
+      next();
+    });
+  };
 };
 
 // Login function
@@ -45,14 +54,14 @@ const authenticateUser = (req, res) => {
         return res.status(401).json({ message: 'Invalid email or password' });
       }
 
-      // Generate JWT
+      // Generate JWT with user role included
       const token = jwt.sign(
         { id: user.id, email: user.email, role: user.role },
         SECRET_KEY,
         { expiresIn: '1h' } // Token expiration
       );
 
-      res.json({ token, role: user.role });
+      res.json({ token, role: user.role });  // Send back the token and role
     });
   });
 };
@@ -79,4 +88,4 @@ const signup = (req, res) => {
   });
 };
 
-module.exports = { authenticateJWT, signup, authenticateUser };
+module.exports = { verifyRole, signup, authenticateUser };

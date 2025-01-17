@@ -20,14 +20,25 @@ const Products = () => {
   const [sortOption, setSortOption] = useState('');
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [userRole, setUserRole] = useState(null); // State for storing user role
 
   const productsPerPage = 6;
 
+  // Fetch the user role from JWT token in localStorage
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      const decodedToken = JSON.parse(atob(token.split('.')[1])); // Decode JWT token to get the payload
+      setUserRole(decodedToken.role); // Set the user role
+    }
+  }, []);
+
+  // Fetch products from API
   useEffect(() => {
     setLoading(true);
     axios
       .get('http://localhost:5003/api/products', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       })
       .then((response) => {
         setProducts(response.data);
@@ -58,7 +69,7 @@ const Products = () => {
       .post('http://localhost:5003/api/products', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       })
       .then((response) => {
@@ -104,7 +115,10 @@ const Products = () => {
 
     axios
       .put(`http://localhost:5003/api/products/${id}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
       })
       .then(() => {
         alert('Product updated!');
@@ -123,26 +137,39 @@ const Products = () => {
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
 
   const filteredProducts = products
-    .filter((product) => {
-      return (
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    })
-    .filter((product) => {
-      return categoryFilter ? product.category === categoryFilter : true;
-    });
+  .filter((product) => {
+    // Safely check if name or description is available before calling .toLowerCase()
+    const name = product.name || '';
+    const description = product.description || '';
+    return (
+      name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  })
+  .filter((product) => {
+    return categoryFilter ? product.category === categoryFilter : true;
+  });
+
 
   const currentProducts = filteredProducts
-    .sort((a, b) => {
-      if (sortOption === 'price') {
-        return a.price - b.price;
-      } else if (sortOption === 'name') {
-        return a.name.localeCompare(b.name);
-      }
-      return 0;
-    })
-    .slice(indexOfFirstProduct, indexOfLastProduct);
+  .sort((a, b) => {
+    if (sortOption === 'priceLowHigh') {
+      return a.price - b.price; // Sort low to high
+    } else if (sortOption === 'priceHighLow') {
+      return b.price - a.price; // Sort high to low
+    } else if (sortOption === 'nameAsc') {
+      return a.name.localeCompare(b.name); // Sort A-Z
+    } else if (sortOption === 'nameDesc') {
+      return b.name.localeCompare(a.name); // Sort Z-A
+    }
+    return 0; // Default case (no sorting)
+  })
+  .slice(indexOfFirstProduct, indexOfLastProduct);
+
+  // Show loading state if userRole is not yet fetched
+  if (userRole === null) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="container my-4">
@@ -150,28 +177,38 @@ const Products = () => {
         <p>Loading products...</p>
       ) : (
         <>
-          <SearchFilterSort
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            categoryFilter={categoryFilter}
-            setCategoryFilter={setCategoryFilter}
-            sortOption={sortOption}
-            setSortOption={setSortOption}
+          {userRole === 'customer' && (
+            <SearchFilterSort
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              categoryFilter={categoryFilter}
+              setCategoryFilter={setCategoryFilter}
+              sortOption={sortOption}
+              setSortOption={setSortOption}
+            />
+          )}
+          <ProductList
+            products={currentProducts}
+            handleEditClick={handleEditClick}
+            handleDelete={handleDelete}
+            userRole={userRole} // Pass user role to ProductList
           />
-          <ProductList products={currentProducts} handleEditClick={handleEditClick} handleDelete={handleDelete} />
           <Pagination
             currentPage={currentPage}
             setCurrentPage={setCurrentPage}
             indexOfLastProduct={indexOfLastProduct}
             products={products}
           />
-          <ProductForm
-            product={editingProduct || newProduct}
-            setProduct={editingProduct ? setEditingProduct : setNewProduct}
-            handleSubmit={editingProduct ? (e) => handleUpdate(e, editingProduct.id) : handleSubmit}
-            isEditing={editingProduct !== null}
-            handleCancel={() => setEditingProduct(null)}
-          />
+          {userRole === 'owner' && (
+            <ProductForm
+              product={editingProduct || newProduct}
+              setProduct={editingProduct ? setEditingProduct : setNewProduct}
+              handleSubmit={editingProduct ? (e) => handleUpdate(e, editingProduct.id) : handleSubmit}
+              isEditing={editingProduct !== null}
+              handleCancel={() => setEditingProduct(null)}
+              userRole={userRole} // Pass user role to ProductForm
+            />
+          )}
         </>
       )}
     </div>

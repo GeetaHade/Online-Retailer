@@ -1,4 +1,3 @@
-// SearchFilterSort.js
 import React from 'react';
 
 const SearchFilterSort = ({ searchTerm, setSearchTerm, categoryFilter, setCategoryFilter, sortOption, setSortOption }) => {

@@ -1,7 +1,11 @@
-// ProductForm.js
 import React from 'react';
 
-const ProductForm = ({ product, setProduct, handleSubmit, isEditing, handleCancel }) => {
+const ProductForm = ({ product, setProduct, handleSubmit, isEditing, handleCancel, userRole }) => {
+  // Check if the user is an owner, if not show a permission message
+  if (userRole !== 'owner') {
+    return <p>You do not have permission to access this form.</p>;
+  }
+
   return (
     <form onSubmit={handleSubmit} className="product-form" encType="multipart/form-data">
       <input

@@ -1,32 +1,50 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import '../styles.css'; 
-const Login = ({ setIsLoggedIn }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+import { jwtDecode } from 'jwt-decode'; // Import jwt-decode for decoding the JWT token
+import '../styles.css';
+
+const Login = ({ setIsLoggedIn, setRole }) => {
+  const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    axios
-      .post('http://localhost:5003/api/login', { email, password })
-      .then((response) => {
-        const token = response.data.token;
-        if (token) {
-          localStorage.setItem('token', token);  // Store token in localStorage
-          setIsLoggedIn(true);  // Update the logged-in state
-          navigate('/products');  // Redirect to products after successful login
-        }
-      })
-      .catch((error) => {
-        setError('Invalid credentials or server error');
-        console.error('Login error:', error);
-      });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setCredentials({ ...credentials, [name]: value });
   };
-
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+  
+    try {
+      const response = await axios.post('http://localhost:5003/api/login', credentials);
+  
+      const { token } = response.data;
+      if (token) {
+        // Store token in localStorage
+        localStorage.setItem('token', token);
+  
+        // Decode the token to check the user role
+        const decodedToken = jwtDecode(token);
+        const userRole = decodedToken.role;
+  
+        // Update the logged-in state and role
+        setIsLoggedIn(true);
+        setRole(userRole); // Pass the role to the parent component
+  
+        // Navigate based on user role
+        if (userRole === 'owner') {  // Make sure to check for 'owner'
+          navigate('/products'); // Redirect to products page for store owners
+        } else if (userRole === 'customer') {
+          navigate('/products'); // Redirect to products page for customers
+        }
+      }
+    } catch (error) {
+      setError('Invalid credentials or server error');
+      console.error('Login error:', error);
+    }
+  };
+  
   return (
     <div className="form-container">
       <div className="form-card">
@@ -36,18 +54,20 @@ const Login = ({ setIsLoggedIn }) => {
           <div>
             <input
               type="email"
+              name="email"
               placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={credentials.email}
+              onChange={handleChange}
               required
             />
           </div>
           <div>
             <input
               type="password"
+              name="password"
               placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={credentials.password}
+              onChange={handleChange}
               required
             />
           </div>
