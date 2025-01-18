@@ -30,6 +30,7 @@ const Products = () => {
     if (token) {
       const decodedToken = JSON.parse(atob(token.split('.')[1])); // Decode JWT token to get the payload
       setUserRole(decodedToken.role); // Set the user role
+      console.log('User role fetched:', decodedToken.role); // Log the decoded role
     }
   }, []);
 
@@ -41,6 +42,7 @@ const Products = () => {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       })
       .then((response) => {
+        console.log('Fetched products:', response.data); // Log the fetched products
         setProducts(response.data);
         setLoading(false);
       })
@@ -50,21 +52,23 @@ const Products = () => {
       });
   }, []);
 
-  // Handle adding a new product
+  // Handle product form submission
   const handleSubmit = (e) => {
     e.preventDefault();
+  
+    // Ensure all required fields are filled
     if (!newProduct.name || !newProduct.price || !newProduct.description || !newProduct.category || !newProduct.image) {
       alert('Please fill in all fields.');
       return;
     }
-
+  
     const formData = new FormData();
     formData.append('name', newProduct.name);
     formData.append('price', newProduct.price);
     formData.append('description', newProduct.description);
     formData.append('category', newProduct.category);
     formData.append('image', newProduct.image);
-
+  
     axios
       .post('http://localhost:5003/api/products', formData, {
         headers: {
@@ -73,13 +77,24 @@ const Products = () => {
         },
       })
       .then((response) => {
+        console.log('New product added:', response.data); // Log the response
         alert('Product added successfully!');
-        setProducts((prevProducts) => [...prevProducts, response.data]);
+  
+        // Prepend the new product to the list
+        setProducts((prevProducts) => {
+          const updatedProducts = [response.data, ...prevProducts]; // Prepend the new product
+          setCurrentPage(1); // Reset to the first page
+          return updatedProducts;
+        });
+  
         setNewProduct({ name: '', price: '', description: '', category: '', image: null });
-        document.getElementById('image-input').value = ''; // Reset image input field
       })
-      .catch((error) => console.error('Error adding product:', error));
+      .catch((error) => {
+        console.error('Error adding product:', error);
+        alert('Error adding product. Please try again.');
+      });
   };
+  
 
   // Handle deleting a product
   const handleDelete = (id) => {
@@ -90,13 +105,17 @@ const Products = () => {
       .then(() => {
         alert('Product deleted!');
         setProducts(products.filter((product) => product.id !== id));
+        console.log('Remaining products after deletion:', products); // Log remaining products
       })
-      .catch((error) => console.error('Error deleting the product:', error));
+      .catch((error) => {
+        console.error('Error deleting the product:', error);
+      });
   };
 
   // Handle editing a product
   const handleEditClick = (product) => {
     setEditingProduct({ ...product });
+    console.log('Editing product:', product); // Log the product being edited
   };
 
   // Handle updating an existing product
@@ -135,12 +154,11 @@ const Products = () => {
   // Pagination logic
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-
+  
   const filteredProducts = products
   .filter((product) => {
-    // Safely check if name or description is available before calling .toLowerCase()
-    const name = product.name || '';
-    const description = product.description || '';
+    const name = product.name || ''; // Provide default empty string
+    const description = product.description || ''; // Provide default empty string
     return (
       name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -150,21 +168,24 @@ const Products = () => {
     return categoryFilter ? product.category === categoryFilter : true;
   });
 
+console.log('Filtered products:', filteredProducts); // Log filtered products before sorting
 
-  const currentProducts = filteredProducts
+const currentProducts = filteredProducts
   .sort((a, b) => {
     if (sortOption === 'priceLowHigh') {
-      return a.price - b.price; // Sort low to high
+      return a.price - b.price; // Sort price from low to high
     } else if (sortOption === 'priceHighLow') {
-      return b.price - a.price; // Sort high to low
+      return b.price - a.price; // Sort price from high to low
     } else if (sortOption === 'nameAsc') {
-      return a.name.localeCompare(b.name); // Sort A-Z
+      return a.name.localeCompare(b.name); // Sort name A-Z
     } else if (sortOption === 'nameDesc') {
-      return b.name.localeCompare(a.name); // Sort Z-A
+      return b.name.localeCompare(a.name); // Sort name Z-A
     }
-    return 0; // Default case (no sorting)
+    return 0; // No sorting applied
   })
   .slice(indexOfFirstProduct, indexOfLastProduct);
+
+  console.log('Current products (paginated):', currentProducts); // Log current products after pagination
 
   // Show loading state if userRole is not yet fetched
   if (userRole === null) {

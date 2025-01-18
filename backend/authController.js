@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const { mysqlConnection } = require('./config/database');
 
 // JWT secret key
-const SECRET_KEY = 'your_secret_key_here'; // Replace with a secure key
+const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key_here'; // Replace with a secure key
 
 // Middleware to verify JWT and check user role
 const verifyRole = (requiredRole) => {
@@ -35,7 +35,6 @@ const verifyRole = (requiredRole) => {
 const authenticateUser = (req, res) => {
   const { email, password } = req.body;
 
-  // Query user by email
   const query = 'SELECT * FROM users WHERE email = ?';
   mysqlConnection.query(query, [email], (err, results) => {
     if (err) {
@@ -48,20 +47,18 @@ const authenticateUser = (req, res) => {
     }
 
     const user = results[0];
-    // Compare passwords
     bcrypt.compare(password, user.password, (compareErr, isMatch) => {
       if (compareErr || !isMatch) {
         return res.status(401).json({ message: 'Invalid email or password' });
       }
 
-      // Generate JWT with user role included
       const token = jwt.sign(
         { id: user.id, email: user.email, role: user.role },
         SECRET_KEY,
-        { expiresIn: '1h' } // Token expiration
+        { expiresIn: '1h' }
       );
 
-      res.json({ token, role: user.role });  // Send back the token and role
+      res.json({ token, role: user.role });
     });
   });
 };
@@ -70,6 +67,11 @@ const authenticateUser = (req, res) => {
 const signup = (req, res) => {
   const { email, password, role } = req.body;
 
+  const allowedRoles = ['owner', 'customer'];
+  if (!allowedRoles.includes(role)) {
+    return res.status(400).json({ message: 'Invalid role specified' });
+  }
+
   bcrypt.hash(password, 10, (err, hashedPassword) => {
     if (err) {
       console.error('Error hashing password:', err);
@@ -77,7 +79,7 @@ const signup = (req, res) => {
     }
 
     const query = 'INSERT INTO users (email, password, role) VALUES (?, ?, ?)';
-    mysqlConnection.query(query, [email, hashedPassword, role], (err, result) => {
+    mysqlConnection.query(query, [email, hashedPassword, role], (err) => {
       if (err) {
         console.error('Error creating user:', err);
         return res.status(500).json({ message: 'Server error' });

@@ -3,41 +3,41 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const multer = require('multer');
 const path = require('path');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const { mysqlConnection } = require('./config/database'); // Import MySQL connection
-const { authenticateJWT, signup, authenticateUser } = require('./authController');
+const { verifyRole, signup, authenticateUser } = require('./authController');
+
+require('dotenv').config(); // Load environment variables
 
 const app = express();
 const port = process.env.PORT || 5003;
 
 // Set up multer storage to store images in 'uploads/' folder with unique names
 const storage = multer.diskStorage({
-  destination: './uploads/',  // Folder where images will be stored
+  destination: './uploads/', // Folder where images will be stored
   filename: (req, file, cb) => {
-    cb(null, `${Date.now()}${path.extname(file.originalname)}`);  // Unique filename
+    cb(null, `${Date.now()}${path.extname(file.originalname)}`); // Unique filename
   },
 });
 
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 },  // Limit file size to 5MB
+  limits: { fileSize: 5 * 1024 * 1024 }, // Limit file size to 5MB
   fileFilter: (req, file, cb) => {
-    const fileTypes = /jpeg|jpg|png|gif/;  // Allowed file types
+    const fileTypes = /jpeg|jpg|png|gif/; // Allowed file types
     const extname = fileTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = fileTypes.test(file.mimetype);
 
     if (extname && mimetype) {
-      cb(null, true);  // Accept the file
+      cb(null, true); // Accept the file
     } else {
-      cb('Error: Images only!');  // Reject invalid file type
+      cb('Error: Images only!'); // Reject invalid file type
     }
   },
 });
 
 // Middleware setup
 app.use(cors({
-  origin: 'http://localhost:3000',  // Allow requests only from your frontend URL
+  origin: 'http://localhost:3000', // Allow requests only from your frontend URL
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
@@ -50,7 +50,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.post('/api/login', authenticateUser);
 
 // Route to handle user signup
-app.post('/api/signup', signup);  // Use the signup method from authController
+app.post('/api/signup', signup); // Use the signup method from authController
 
 // Test the MySQL connection
 mysqlConnection.connect((err) => {
@@ -74,23 +74,33 @@ app.get('/api/products', (req, res) => {
   });
 });
 
-// Route to create a new product - Protected route (authentication needed)
-app.post('/api/products', authenticateJWT, upload.single('image'), (req, res) => {
+// Route to create a new product - Protected route (Owner only)
+app.post('/api/products', verifyRole('owner'), upload.single('image'), (req, res) => {
   const { name, price, description, category } = req.body;
   const image = req.file ? req.file.filename : null;
 
   const query = 'INSERT INTO products (name, price, description, category, image) VALUES (?, ?, ?, ?, ?)';
-  mysqlConnection.query(query, [name, price, description, category, image], (err, result) => {
+  mysqlConnection.query(query, [name, price, description, category, image], (err, results) => {
     if (err) {
       console.error('Error adding product:', err);
       res.status(500).send('Server Error');
     } else {
-      res.status(201).send('Product created with image');
+      // Return the newly created product data
+      const newProduct = {
+        id: results.insertId, // Get the newly created product ID
+        name,
+        price,
+        description,
+        category,
+        image: image ? `/uploads/${image}` : null, // Send back image path
+      };
+      res.status(201).json(newProduct); // Send the new product details in response
     }
   });
 });
 
-app.put('/api/products/:id', authenticateJWT, upload.single('image'), (req, res) => {
+// Route to update a product - Protected route (Owner only)
+app.put('/api/products/:id', verifyRole('owner'), upload.single('image'), (req, res) => {
   const { name, price, description, category } = req.body;
   const image = req.file ? req.file.filename : null;
 
@@ -102,28 +112,20 @@ app.put('/api/products/:id', authenticateJWT, upload.single('image'), (req, res)
     ? [name, price, description, category, image, req.params.id]
     : [name, price, description, category, req.params.id];
 
-  mysqlConnection.query(query, params, (err, result) => {
+  mysqlConnection.query(query, params, (err) => {
     if (err) {
       console.error('Error updating product:', err);
       res.status(500).send('Server Error');
     } else {
-      const selectQuery = 'SELECT * FROM products WHERE id = ?';
-      mysqlConnection.query(selectQuery, [req.params.id], (selectErr, updatedProduct) => {
-        if (selectErr) {
-          console.error('Error fetching updated product:', selectErr);
-          res.status(500).send('Server Error');
-        } else {
-          res.json({ message: 'Product updated', product: updatedProduct[0] });
-        }
-      });
+      res.status(200).send('Product updated successfully');
     }
   });
 });
 
-// Route to delete a product - Protected route (authentication needed)
-app.delete('/api/products/:id', authenticateJWT, (req, res) => {
+// Route to delete a product - Protected route (Owner only)
+app.delete('/api/products/:id', verifyRole('owner'), (req, res) => {
   const query = 'DELETE FROM products WHERE id = ?';
-  mysqlConnection.query(query, [req.params.id], (err, result) => {
+  mysqlConnection.query(query, [req.params.id], (err) => {
     if (err) {
       console.error('Error deleting product:', err);
       res.status(500).send('Server Error');
