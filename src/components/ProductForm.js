@@ -34,6 +34,7 @@ const ProductForm = ({ product, setProduct, handleSubmit, isEditing, handleCance
       <input
         type="file"
         accept="image/*"
+        key={product.image ? product.image.name || product.image : 'file-input'}
         onChange={(e) => setProduct({ ...product, image: e.target.files[0] })}
       />
       <button type="submit">{isEditing ? 'Update Product' : 'Add Product'}</button>

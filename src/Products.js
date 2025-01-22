@@ -56,7 +56,6 @@ const Products = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
   
-    // Ensure all required fields are filled
     if (!newProduct.name || !newProduct.price || !newProduct.description || !newProduct.category || !newProduct.image) {
       alert('Please fill in all fields.');
       return;
@@ -77,23 +76,24 @@ const Products = () => {
         },
       })
       .then((response) => {
-        console.log('New product added:', response.data); // Log the response
+        console.log('New product added:', response.data);
         alert('Product added successfully!');
   
-        // Prepend the new product to the list
-        setProducts((prevProducts) => {
-          const updatedProducts = [response.data, ...prevProducts]; // Prepend the new product
+        axios.get('http://localhost:5003/api/products', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        }).then((fetchResponse) => {
+          setProducts(fetchResponse.data);
           setCurrentPage(1); // Reset to the first page
-          return updatedProducts;
         });
   
         setNewProduct({ name: '', price: '', description: '', category: '', image: null });
       })
       .catch((error) => {
-        console.error('Error adding product:', error);
-        alert('Error adding product. Please try again.');
+        console.error('Error adding product:', error.response?.data || error.message);
+        alert(error.response?.data?.message || 'Error adding product. Please try again.');
       });
   };
+  
   
 
   // Handle deleting a product
