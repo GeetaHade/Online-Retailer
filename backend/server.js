@@ -5,6 +5,7 @@ const multer = require('multer');
 const path = require('path');
 const { mysqlConnection } = require('./config/database'); // Import MySQL connection
 const { verifyRole, signup, authenticateUser } = require('./authController');
+const cartRoutes = require('./cartController'); // Assuming you have cartController file for cart-related routes
 
 require('dotenv').config(); // Load environment variables
 
@@ -42,6 +43,8 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(bodyParser.json());
+
+app.use(cartRoutes); // Using cartController routes
 
 // Serve images from 'uploads' folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
