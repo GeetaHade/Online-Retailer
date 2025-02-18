@@ -17,7 +17,7 @@ const Login = ({ setIsLoggedIn, setRole }) => {
     e.preventDefault();
   
     try {
-      const response = await axios.post('http://localhost:5003/api/login', credentials);
+      const response = await axios.post('http://localhost:5001/api/login', credentials);
   
       const { token } = response.data;
       if (token) {

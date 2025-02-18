@@ -1,36 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode'; // Corrected named import
+import {jwtDecode} from 'jwt-decode'; // Corrected named import
 import Products from './Products';
 import Signup from './components/Signup';
 import Login from './components/Login';
+import Cart from './components/Cart'; // Import Cart component
 import './App.css';
 import './styles.css';
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [role, setRole] = useState(null);
-  const [loading, setLoading] = useState(true); // Added loading state to handle immediate re-render
+  const [loading, setLoading] = useState(true);
 
-  // Check if user is logged in and retrieve their role on app load
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
       try {
-        const decodedToken = jwtDecode(token); // Decode JWT token to extract role
+        const decodedToken = jwtDecode(token);
         setIsLoggedIn(true);
-        setRole(decodedToken.role); // Set role based on decoded token
+        setRole(decodedToken.role);
       } catch (error) {
         console.error('Invalid token:', error);
-        localStorage.removeItem('token'); // Clear invalid token
+        localStorage.removeItem('token');
         setIsLoggedIn(false);
         setRole(null);
       }
     }
-    setLoading(false); // Set loading to false after checking
+    setLoading(false);
   }, []);
 
-  // Handle logout functionality
   const handleLogout = () => {
     localStorage.removeItem('token');
     setIsLoggedIn(false);
@@ -38,13 +37,12 @@ const App = () => {
   };
 
   if (loading) {
-    return <div>Loading...</div>; // Show a loading indicator while the role is being checked
+    return <div>Loading...</div>;
   }
 
   return (
     <Router>
       <div>
-        {/* Navbar */}
         <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
           <div className="container-fluid">
             <h1 className="navbar-brand">Online Retailer</h1>
@@ -67,9 +65,14 @@ const App = () => {
                     </div>
                   )}
                   {role === 'customer' && (
-                    <div className="nav-item">
-                      <Link className="nav-link" to="/products">View Products</Link>
-                    </div>
+                    <>
+                      <div className="nav-item">
+                        <Link className="nav-link" to="/products">View Products</Link>
+                      </div>
+                      <div className="nav-item">
+                        <Link className="nav-link" to="/cart">Cart</Link> {/* Cart Link */}
+                      </div>
+                    </>
                   )}
                   <div className="nav-item">
                     <button onClick={handleLogout} className="nav-link btn btn-link text-white">Logout</button>
@@ -82,7 +85,6 @@ const App = () => {
 
         <h1 className="text-center">Welcome to Online Retailer</h1>
 
-        {/* Routes Setup */}
         <Routes>
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} setRole={setRole} />} />
@@ -100,6 +102,17 @@ const App = () => {
               )
             }
           />
+          <Route
+          path="/cart"
+          element={
+            isLoggedIn && role === 'customer' ? (
+              <Cart /> // Render the Cart component
+            ) : (
+              <Navigate to="/login" replace /> // Redirect to login if not a customer
+            )
+          }
+          />
+        
           <Route path="/" element={<Navigate to={isLoggedIn ? "/products" : "/login"} replace />} />
         </Routes>
       </div>

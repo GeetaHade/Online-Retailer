@@ -38,7 +38,7 @@ const Products = () => {
   useEffect(() => {
     setLoading(true);
     axios
-      .get('http://localhost:5003/api/products', {
+      .get('http://localhost:5001/api/products', {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       })
       .then((response) => {
@@ -69,7 +69,7 @@ const Products = () => {
     formData.append('image', newProduct.image);
   
     axios
-      .post('http://localhost:5003/api/products', formData, {
+      .post('http://localhost:5001/api/products', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -79,7 +79,7 @@ const Products = () => {
         console.log('New product added:', response.data);
         alert('Product added successfully!');
   
-        axios.get('http://localhost:5003/api/products', {
+        axios.get('http://localhost:5001/api/products', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         }).then((fetchResponse) => {
           setProducts(fetchResponse.data);
@@ -94,12 +94,11 @@ const Products = () => {
       });
   };
   
-  
 
   // Handle deleting a product
   const handleDelete = (id) => {
     axios
-      .delete(`http://localhost:5003/api/products/${id}`, {
+      .delete(`http://localhost:5001/api/products/${id}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       })
       .then(() => {
@@ -121,36 +120,55 @@ const Products = () => {
   // Handle updating an existing product
   const handleUpdate = (e, id) => {
     e.preventDefault();
-    const formData = new FormData();
-    formData.append('name', editingProduct.name);
-    formData.append('price', editingProduct.price);
-    formData.append('description', editingProduct.description);
-    formData.append('category', editingProduct.category);
-
-    // Append image only if it's changed
-    if (editingProduct.image) {
-      formData.append('image', editingProduct.image);
+  
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("You are not logged in. Please log in again.");
+      return;
     }
-
+  
+    console.log("Token being sent:", token); // Debugging log
+  
+    const formData = new FormData();
+    formData.append("name", editingProduct.name);
+    formData.append("price", editingProduct.price);
+    formData.append("description", editingProduct.description);
+    formData.append("category", editingProduct.category);
+  
+    if (editingProduct.image && editingProduct.image !== "existing-image") {
+      formData.append("image", editingProduct.image);
+    }
+  
     axios
-      .put(`http://localhost:5003/api/products/${id}`, formData, {
+      .put(`http://localhost:5001/api/products/${id}`, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
         },
       })
       .then(() => {
-        alert('Product updated!');
+        alert("Product updated!");
         setEditingProduct(null);
-        setProducts((prevProducts) =>
-          prevProducts.map((product) =>
-            product.id === id ? { ...product, ...editingProduct, image: editingProduct.image || product.image } : product
-          )
-        );
+        axios.get(`http://localhost:5001/api/products/${id}`)
+          .then((res) => {
+            const updatedProduct = res.data;
+            setProducts((prevProducts) =>
+              prevProducts.map((product) =>
+                product.id === id ? updatedProduct : product
+              )
+            );
+          })
+          .catch((fetchError) => {
+            console.error("Error fetching updated product:", fetchError);
+          });
       })
-      .catch((error) => console.error('Error updating the product:', error));
+      .catch((error) => {
+        console.error("Error updating the product:", error.response?.data || error.message);
+        alert("Error updating product. Please check the console for details.");
+      });
   };
-
+  
+  
   // Pagination logic
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
@@ -168,9 +186,9 @@ const Products = () => {
     return categoryFilter ? product.category === categoryFilter : true;
   });
 
-console.log('Filtered products:', filteredProducts); // Log filtered products before sorting
+  console.log('Filtered products:', filteredProducts); // Log filtered products before sorting
 
-const currentProducts = filteredProducts
+  const currentProducts = filteredProducts
   .sort((a, b) => {
     if (sortOption === 'priceLowHigh') {
       return a.price - b.price; // Sort price from low to high
