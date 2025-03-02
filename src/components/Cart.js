@@ -38,6 +38,33 @@ const Cart = () => {
       .catch((error) => console.error("Error removing item:", error));
   };
 
+  // Update Quantity in Cart
+  const updateQuantity = (cartId, newQuantity) => {
+    if (newQuantity < 1) return; // Prevent quantity from going below 1
+
+    fetch("http://localhost:5001/api/cart", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify({ cartId, quantity: newQuantity }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.message === "Quantity updated successfully") {
+          setCartItems((prevItems) =>
+            prevItems.map((item) =>
+              item.cart_id === cartId ? { ...item, quantity: newQuantity } : item
+            )
+          );
+        } else {
+          alert("Failed to update quantity.");
+        }
+      })
+      .catch((error) => console.error("Error updating quantity:", error));
+  };
+
   return (
     <div className="container my-4">
       <h2>Your Cart</h2>
@@ -51,7 +78,23 @@ const Cart = () => {
                   alt={item.name}
                   style={{ width: "50px", marginRight: "10px" }}
                 />
-                <strong>{item.name}</strong> - ${item.price} x {item.quantity}
+                <strong>{item.name}</strong> - ${item.price} 
+                <br />
+                <label>Quantity: </label>
+                <button
+                  className="btn btn-sm btn-secondary mx-1"
+                  onClick={() => updateQuantity(item.cart_id, item.quantity - 1)}
+                  disabled={item.quantity === 1}
+                >
+                  -
+                </button>
+                <span className="px-2">{item.quantity}</span>
+                <button
+                  className="btn btn-sm btn-secondary mx-1"
+                  onClick={() => updateQuantity(item.cart_id, item.quantity + 1)}
+                >
+                  +
+                </button>
               </div>
               <button
                 className="btn btn-danger btn-sm"
